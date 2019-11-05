@@ -29,6 +29,7 @@ namespace AntiNewtonianDynamics
             graphics = new GraphicsDeviceManager(this) { SynchronizeWithVerticalRetrace = true };
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+            Window.AllowUserResizing = true;
         }
 
         protected override void Initialize()
@@ -148,8 +149,9 @@ namespace AntiNewtonianDynamics
                 {
                     spriteBatch.Draw(circleTexture, new Rectangle(((trace - offset) * scalingFactor - new Vector2(5, 5)).ToPoint(), new Point(10, 10)), new Rectangle(0, 0, 80, 80), body.TraceColor);
                 }
-                spriteBatch.Draw(circleTexture, new Rectangle(((body.Position - offset) * scalingFactor - new Vector2(20, 20)).ToPoint(), new Point(40, 40)), new Rectangle(0, 0, 80, 80), body.BodyColor);
             }
+            foreach (Body body in bodies)
+                spriteBatch.Draw(circleTexture, new Rectangle(((body.Position - offset) * scalingFactor - new Vector2(20, 20)).ToPoint(), new Point(40, 40)), new Rectangle(0, 0, 80, 80), body.BodyColor);
 
             spriteBatch.End();
 
