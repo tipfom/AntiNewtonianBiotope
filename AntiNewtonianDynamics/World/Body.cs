@@ -58,7 +58,7 @@ namespace AntiNewtonianDynamics.World
             {
                 timeSinceLastTrace -= 0.2f;
                 Trace.Enqueue(Position);
-                if (Trace.Count > 500) Trace.Dequeue();
+                if (Trace.Count > 5000) Trace.Dequeue();
             }
             Position += dt * Velocity;
         }

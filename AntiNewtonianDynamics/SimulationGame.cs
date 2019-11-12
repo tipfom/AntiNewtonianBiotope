@@ -118,6 +118,12 @@ namespace AntiNewtonianDynamics
                 bodies.Add(new Predator(new Vector2(1f, 0.1f), new Vector2(-0.4f, -0.4f), new Body.ParameterSet(2, 1f)));
                 bodies.Add(new Predator(new Vector2(0f, 2f), new Vector2(0.4f, 0f), new Body.ParameterSet(2, 1f)));
             }
+            if (keyboardState.IsKeyDown(Keys.J) && bodies.Count == 0)
+            {
+                // quasiperiodic trajectory with dissipation
+                bodies.Add(new Prey(new Vector2(0, 1), new Vector2(0.70710678118654752440f, 0f), new Body.ParameterSet(2, 0), (s, v, d) => Body.GeneralGammaForceConservative(0, s, v, d), Body.ZeroForce, Body.LinearFriction));
+                bodies.Add(new Predator(new Vector2(0, 2), new Vector2(2* 0.70710678118654752440f, 0), new Body.ParameterSet(1, 0), (s, v, d) => Body.GeneralGammaForceConservative(0, s, v, d), Body.ZeroForce, Body.LinearFriction));
+            }
             if (keyboardState.IsKeyDown(Keys.K) && bodies.Count == 0)
             {
                 // quasiperiodic trajectory with dissipation
