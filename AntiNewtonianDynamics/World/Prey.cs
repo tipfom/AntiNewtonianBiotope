@@ -6,13 +6,13 @@ namespace AntiNewtonianDynamics.World
     public class Prey : Body
     {
         public Prey(Vector2 position, Vector2 velocity, ParameterSet parameter) : base(position, velocity, Color.Gray, parameter)
-        {
-        }
+        { }
 
-        public override void Move(IEnumerable<Body> bodies, float dt)
-        {
-            base.Move(bodies, dt);
+        public Prey(Vector2 position, Vector2 velocity, ParameterSet parameters, Force predatorPreyForce, Force preyPreyForce, Force dissipativeForce) : base(position, velocity, Color.Gray, parameters, predatorPreyForce, preyPreyForce, dissipativeForce)
+        { }
 
+        public override void UpdateVelocity(IEnumerable<Body> bodies, float dt)
+        {
             foreach (Body body in bodies)
             {
                 Vector2 distance = Position - body.Position;
@@ -28,7 +28,6 @@ namespace AntiNewtonianDynamics.World
                 }
             }
             if (Velocity.Length() > 0) Velocity -= dt * DissipativeForce(Parameters, Velocity.Length(), 0) * Velocity / Velocity.Length();
-            Position += dt * Velocity;
         }
     }
 }

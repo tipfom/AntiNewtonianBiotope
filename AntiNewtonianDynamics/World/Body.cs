@@ -34,16 +34,24 @@ namespace AntiNewtonianDynamics.World
 
         private float timeSinceLastTrace = 0;
 
-        public Body(Vector2 position, Vector2 velocity, Color color, ParameterSet parameters)
+        public Body(Vector2 position, Vector2 velocity, Color color, ParameterSet parameters) : this(position, velocity, color, parameters, InverseForceConservative, (self, v, d) => InverseForceConservative(self, v, d) - InverseSquareForceConservative(self, v, d), LinearFriction)
+        { }
+
+        public Body(Vector2 position, Vector2 velocity, Color color, ParameterSet parameters, Force predatorPreyForce, Force preyPreyForce, Force dissipativeForce)
         {
             Position = position;
             Velocity = velocity;
             BodyColor = color;
             TraceColor = new Color(color, 0.3f);
             Parameters = parameters;
+            PredatorPreyForce = predatorPreyForce;
+            PreyPreyForce = preyPreyForce;
+            DissipativeForce = dissipativeForce;
         }
 
-        public virtual void Move(IEnumerable<Body> bodies, float dt)
+        public abstract void UpdateVelocity(IEnumerable<Body> bodies, float dt);
+
+        public void Move(float dt)
         {
             timeSinceLastTrace += dt;
             if (timeSinceLastTrace > 0.2f)
@@ -52,37 +60,43 @@ namespace AntiNewtonianDynamics.World
                 Trace.Enqueue(Position);
                 if (Trace.Count > 500) Trace.Dequeue();
             }
+            Position += dt * Velocity;
         }
 
         #region Examples of Forces
-        private static float ZeroForce(ParameterSet self, float velocity, float distance)
+        public static float ZeroForce(ParameterSet self, float velocity, float distance)
         {
             return 0;
         }
 
-        private static float GeneralGammaForceConservative(float gamma, ParameterSet self, float velocity, float distance)
+        public static float GeneralGammaForceConservative(float gamma, ParameterSet self, float velocity, float distance)
         {
             return (float)Math.Pow(distance, gamma) / self.Mass;
         }
 
-        private static float InverseSquareForceConservative(ParameterSet self, float velocity, float distance)
+        public static float InverseSquareForceConservative(ParameterSet self, float velocity, float distance)
         {
             return GeneralGammaForceConservative(-2, self, velocity, distance);
         }
 
-        private static float InverseForceConservative(ParameterSet self, float velocity, float distance)
+        public static float InverseForceConservative(ParameterSet self, float velocity, float distance)
         {
             return GeneralGammaForceConservative(-1, self, velocity, distance);
         }
 
-        private static float GeneralFrictionForce(float alpha, ParameterSet self, float velocity, float distance)
+        public static float GeneralFrictionForce(float alpha, ParameterSet self, float velocity, float distance)
         {
             return self.DragCoefficient * (float)Math.Pow(velocity, alpha) / self.Mass;
         }
 
-        private static float NewtonianFiction(ParameterSet self, float velocity, float distance)
+        public static float NewtonianFiction(ParameterSet self, float velocity, float distance)
         {
             return GeneralFrictionForce(2, self, velocity, distance);
+        }
+
+        public static float LinearFriction(ParameterSet self, float velocity, float distance)
+        {
+            return GeneralFrictionForce(1, self, velocity, distance);
         }
         #endregion
     }

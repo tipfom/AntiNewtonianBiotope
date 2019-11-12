@@ -55,12 +55,18 @@ namespace AntiNewtonianDynamics
             CheckKeyboard(dt);
             CheckMouse();
 
-            if (lockIndex > -1 && lockIndex < bodies.Count) offset = bodies[lockIndex].Position - new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height) / scalingFactor / 2f;
-
-            overheadDt += 8 * dt;
+            overheadDt += 16 * dt;
             while ((overheadDt -= 0.001f) > 0)
-                foreach (Body body in bodies) body.Move(bodies, 0.001f);
+            {
+                foreach (Body body in bodies)
+                    body.UpdateVelocity(bodies, 0.001f);
 
+                foreach (Body body in bodies)
+                    body.Move(0.001f);
+            }
+
+            if (lockIndex > -1 && lockIndex < bodies.Count) offset = bodies[lockIndex].Position - new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height) / scalingFactor / 2f;
+            
             base.Update(gameTime);
         }
 
@@ -111,6 +117,18 @@ namespace AntiNewtonianDynamics
                 bodies.Add(new Prey(new Vector2(0.5f, 1), new Vector2(0f, 0f), new Body.ParameterSet(1f, 3)));
                 bodies.Add(new Predator(new Vector2(1f, 0.1f), new Vector2(-0.4f, -0.4f), new Body.ParameterSet(2, 1f)));
                 bodies.Add(new Predator(new Vector2(0f, 2f), new Vector2(0.4f, 0f), new Body.ParameterSet(2, 1f)));
+            }
+            if (keyboardState.IsKeyDown(Keys.K) && bodies.Count == 0)
+            {
+                // quasiperiodic trajectory with dissipation
+                bodies.Add(new Prey(new Vector2(0.4f, 0), new Vector2(0f, 0f), new Body.ParameterSet(1, 2), (s, v, d) => Body.GeneralGammaForceConservative(0, s, v, d), Body.ZeroForce, Body.LinearFriction));
+                bodies.Add(new Predator(new Vector2(0.5f, 0), new Vector2(0.3f, 0), new Body.ParameterSet(1, 1), (s, v, d) => Body.GeneralGammaForceConservative(0, s, v, d), Body.ZeroForce, Body.LinearFriction));
+            }
+            if (keyboardState.IsKeyDown(Keys.L) && bodies.Count == 0)
+            {
+                // quasiperiodic trajectory with dissipation
+                bodies.Add(new Prey(new Vector2(0.4f, 0), new Vector2(0f, 0f), new Body.ParameterSet(1, 0), Body.InverseSquareForceConservative, Body.ZeroForce, Body.ZeroForce));
+                bodies.Add(new Predator(new Vector2(0.5f, 0), new Vector2(0f, 0), new Body.ParameterSet(1, 0), Body.InverseSquareForceConservative, Body.ZeroForce, Body.ZeroForce));
             }
 
             if (keyboardState.IsKeyDown(Keys.Q)) bodies.Clear();
