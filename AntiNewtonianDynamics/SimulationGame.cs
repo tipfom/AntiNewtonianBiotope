@@ -11,6 +11,7 @@ namespace AntiNewtonianDynamics
     public class SimulationGame : Game
     {
         private float scalingFactor = 100f;
+        private bool drawPath = false;
 
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
@@ -24,6 +25,7 @@ namespace AntiNewtonianDynamics
 
         private int lockIndex = -1;
         private float overheadDt = 0;
+        private float currentTimeMultiplier = 4;
         public SimulationGame() : base()
         {
             graphics = new GraphicsDeviceManager(this) { SynchronizeWithVerticalRetrace = true };
@@ -55,7 +57,7 @@ namespace AntiNewtonianDynamics
             CheckKeyboard(dt);
             CheckMouse();
 
-            overheadDt += 16 * dt;
+            overheadDt += currentTimeMultiplier * dt;
             while ((overheadDt -= 0.001f) > 0)
             {
                 foreach (Body body in bodies)
@@ -66,7 +68,7 @@ namespace AntiNewtonianDynamics
             }
 
             if (lockIndex > -1 && lockIndex < bodies.Count) offset = bodies[lockIndex].Position - new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height) / scalingFactor / 2f;
-            
+
             base.Update(gameTime);
         }
 
@@ -95,24 +97,30 @@ namespace AntiNewtonianDynamics
 
             if (keyboardState.IsKeyDown(Keys.Y) && bodies.Count == 0)
             {
+                drawPath = true;
                 // quasiperiodic trajectory no dissipation
                 bodies.Add(new Prey(new Vector2(1, 0), new Vector2(0, 1), new Body.ParameterSet(2, 0)));
                 bodies.Add(new Predator(new Vector2(2, 0), new Vector2(0, 2), new Body.ParameterSet(1, 0)));
             }
             if (keyboardState.IsKeyDown(Keys.X) && bodies.Count == 0)
             {
+                drawPath = true;
+                currentTimeMultiplier = 12f;
                 // quasiperiodic trajectory with dissipation
                 bodies.Add(new Prey(new Vector2(1, 1), new Vector2(-0.1f, 0.9f), new Body.ParameterSet(1, 1)));
                 bodies.Add(new Predator(new Vector2(9, 3), new Vector2(0, 0.4f), new Body.ParameterSet(2, 0.1f)));
             }
             if (keyboardState.IsKeyDown(Keys.C) && bodies.Count == 0)
             {
+                drawPath = true;
+                currentTimeMultiplier = 32f;
                 // quasiperiodic trajectory with dissipation
                 bodies.Add(new Prey(new Vector2(0.3f, 24), new Vector2(0f, 0f), new Body.ParameterSet(0.5f, 2)));
                 bodies.Add(new Predator(new Vector2(-0.2f, 47f), new Vector2(0, 0f), new Body.ParameterSet(1, 1f)));
             }
             if (keyboardState.IsKeyDown(Keys.V) && bodies.Count == 0)
             {
+                drawPath = true;
                 // quasiperiodic trajectory with dissipation
                 bodies.Add(new Prey(new Vector2(0.5f, 1), new Vector2(0f, 0f), new Body.ParameterSet(1f, 3)));
                 bodies.Add(new Predator(new Vector2(1f, 0.1f), new Vector2(-0.4f, -0.4f), new Body.ParameterSet(2, 1f)));
@@ -120,24 +128,32 @@ namespace AntiNewtonianDynamics
             }
             if (keyboardState.IsKeyDown(Keys.J) && bodies.Count == 0)
             {
+                drawPath = true;
                 // quasiperiodic trajectory with dissipation
                 bodies.Add(new Prey(new Vector2(0, 1), new Vector2(0.70710678118654752440f, 0f), new Body.ParameterSet(2, 0), (s, v, d) => Body.GeneralGammaForceConservative(0, s, v, d), Body.ZeroForce, Body.LinearFriction));
-                bodies.Add(new Predator(new Vector2(0, 2), new Vector2(2* 0.70710678118654752440f, 0), new Body.ParameterSet(1, 0), (s, v, d) => Body.GeneralGammaForceConservative(0, s, v, d), Body.ZeroForce, Body.LinearFriction));
+                bodies.Add(new Predator(new Vector2(0, 2), new Vector2(2 * 0.70710678118654752440f, 0), new Body.ParameterSet(1, 0), (s, v, d) => Body.GeneralGammaForceConservative(0, s, v, d), Body.ZeroForce, Body.LinearFriction));
             }
             if (keyboardState.IsKeyDown(Keys.K) && bodies.Count == 0)
             {
+                drawPath = true;
                 // quasiperiodic trajectory with dissipation
                 bodies.Add(new Prey(new Vector2(0.4f, 0), new Vector2(0f, 0f), new Body.ParameterSet(1, 2), (s, v, d) => Body.GeneralGammaForceConservative(0, s, v, d), Body.ZeroForce, Body.LinearFriction));
                 bodies.Add(new Predator(new Vector2(0.5f, 0), new Vector2(0.3f, 0), new Body.ParameterSet(1, 1), (s, v, d) => Body.GeneralGammaForceConservative(0, s, v, d), Body.ZeroForce, Body.LinearFriction));
             }
             if (keyboardState.IsKeyDown(Keys.L) && bodies.Count == 0)
             {
+                drawPath = true;
                 // quasiperiodic trajectory with dissipation
                 bodies.Add(new Prey(new Vector2(0.4f, 0), new Vector2(0f, 0f), new Body.ParameterSet(1, 0), Body.InverseSquareForceConservative, Body.ZeroForce, Body.ZeroForce));
                 bodies.Add(new Predator(new Vector2(0.5f, 0), new Vector2(0f, 0), new Body.ParameterSet(1, 0), Body.InverseSquareForceConservative, Body.ZeroForce, Body.ZeroForce));
             }
 
-            if (keyboardState.IsKeyDown(Keys.Q)) bodies.Clear();
+            if (keyboardState.IsKeyDown(Keys.Q))
+            {
+                drawPath = false;
+                currentTimeMultiplier = 4f;
+                bodies.Clear();
+            }
         }
 
         private void CheckMouse()
@@ -167,11 +183,14 @@ namespace AntiNewtonianDynamics
 
             spriteBatch.Begin();
 
-            foreach (Body body in bodies)
+            if (drawPath)
             {
-                foreach (Vector2 trace in body.Trace)
+                foreach (Body body in bodies)
                 {
-                    spriteBatch.Draw(circleTexture, new Rectangle(((trace - offset) * scalingFactor - new Vector2(5, 5)).ToPoint(), new Point(10, 10)), new Rectangle(0, 0, 80, 80), body.TraceColor);
+                    foreach (Vector2 trace in body.Trace)
+                    {
+                        spriteBatch.Draw(circleTexture, new Rectangle(((trace - offset) * scalingFactor - new Vector2(5, 5)).ToPoint(), new Point(10, 10)), new Rectangle(0, 0, 80, 80), body.TraceColor);
+                    }
                 }
             }
             foreach (Body body in bodies)
